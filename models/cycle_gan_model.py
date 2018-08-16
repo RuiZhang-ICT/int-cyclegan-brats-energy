@@ -18,6 +18,8 @@ class CycleGANModel(BaseModel):
             parser.add_argument('--lambda_B', type=float, default=10.0,
                                 help='weight for cycle loss (B -> A -> B)')
             parser.add_argument('--lambda_identity', type=float, default=0.5, help='use identity mapping. Setting lambda_identity other than 0 has an effect of scaling the weight of the identity mapping loss. For example, if the weight of the identity loss should be 10 times smaller than the weight of the reconstruction loss, please set lambda_identity = 0.1')
+            parser.add_argument('--lambda_energy_tv', type=float, default=10.0)
+            parser.add_argument('--energy_type', type=str, default='tv')
 
         return parser
 
@@ -133,10 +135,14 @@ class CycleGANModel(BaseModel):
         self.loss_cycle_B = self.criterionCycle(self.rec_B, self.real_B) * lambda_B
 
         # rui
-        lambda_energy_A = 10.0
-        lambda_energy_B = 10.0
-        self.loss_ene_A = self.criterionEnergy(self.real_A, self.fake_B) * lambda_energy_A 
-        self.loss_ene_B = self.criterionEnergy(self.real_B, self.fake_A) * lambda_energy_B
+        lambda_energy_A = self.opt.lambda_energy_tv
+        lambda_energy_B = self.opt.lambda_energy_tv
+        if self.opt.energy_type == 'tv':
+            self.loss_ene_A = self.criterionEnergy(self.real_A, self.fake_B) * lambda_energy_A 
+            self.loss_ene_B = self.criterionEnergy(self.real_B, self.fake_A) * lambda_energy_B
+        else:
+            self.loss_ene_A = 0
+            self.loss_ene_B = 0
         # rui
 
         # combined loss
